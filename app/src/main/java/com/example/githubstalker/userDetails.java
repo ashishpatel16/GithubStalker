@@ -3,6 +3,9 @@ package com.example.githubstalker;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,7 +14,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,7 +31,7 @@ public class userDetails extends AppCompatActivity {
 
     private final String baseURL = "https://api.github.com/";
     Button getRepositoriesButton;
-    public TextView name;
+    TextView name;
     TextView email;
     TextView followers;
     TextView following;
@@ -46,34 +54,60 @@ public class userDetails extends AppCompatActivity {
 
         extras = getIntent().getExtras();
         username = extras.getString("USERNAME_FROM_MAIN_ACTIVITY");
+        Log.i("username",""+username);
         name.setText(username);
+        loadData();
+    }
 
+    public void loadData(){
         Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURL)
                 .addConverterFactory(GsonConverterFactory.create()).build();
 
         GithubApi myApi = retrofit.create(GithubApi.class);
-        Call<List<post>> call = myApi.getPosts();
-
-        call.enqueue(new Callback<List<post>>() {
+        Call<post> call = myApi.getPosts(username);
+        call.enqueue(new Callback<post>() {
             @Override
-            public void onResponse(Call<List<post>> call, Response<List<post>> response) {
+            public void onResponse(Call<post> call, Response<post> response) {
+                Log.i("status","started onResponse");
                 if(!response.isSuccessful()){
                     Toast.makeText(userDetails.this, "Something went wrong!", Toast.LENGTH_SHORT).show();
                     Log.i("error!",""+response.code());
                 }else {
-                    List<post> details = response.body();
-                    for(post post : details){
-                        name.setText(post.getName());
-                        email.setText(post.getEmail());
-                        followers.setText(post.getFollowers());
-                        following.setText(post.getFollowing());
+                    //Log.i("status","name,email,followers,following -> "+response.body().getName()+" "
+                       // +response.body().getEmail()+" "+response.body().getFollowers()+" "+response.body().getFollowing());
+                    if(response.body().getName()!=null){
+                        Log.i("status","name not null");
+                        name.setText("Name : " + response.body().getName());
+                    }else {
+                        name.setText("Name not found");
+                    }
+                    if(response.body().getEmail()!=null) {
+                        email.setText("Email : "+response.body().getEmail());
+                        Log.i("status","email not null");
+                    }else {
+                        email.setText("Email not found");
+                    }
+                    followers.setText("Followers : "+ String.valueOf(response.body().getFollowers()));
+                    following.setText("Following : "+ String.valueOf(response.body().getFollowing()));
+
+                    // Updating dp
+                    downloadImageTask task = new downloadImageTask();
+                    Log.i("avatar url" ,""+response.body().getAvatar_url());
+                    Bitmap img = null;
+                    try {
+                        img = task.execute(response.body().getAvatar_url()).get();
+                        if(img!=null) {
+                            dp.setImageBitmap(img);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<List<post>> call, Throwable t) {
-                Log.i("Error!",t.getMessage());
+            public void onFailure(Call<post> call, Throwable t) {
+                Log.i("Failure!",t.getMessage());
             }
         });
     }
@@ -82,6 +116,24 @@ public class userDetails extends AppCompatActivity {
 
         Intent intent = new Intent(this,repositoryList.class);
         startActivity(intent);
+    }
+
+    public static class downloadImageTask extends AsyncTask<String,Void, Bitmap> {
+        // Asynchronously download the display picture
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            Bitmap downloadedImg;
+            try {
+                URL url = new URL(urls[0]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                InputStream ip = connection.getInputStream();
+                downloadedImg = BitmapFactory.decodeStream(ip);
+                return downloadedImg;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 
 }

@@ -29,7 +29,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class userDetails extends AppCompatActivity {
 
-    private final String baseURL = "https://api.github.com/";
     Button getRepositoriesButton;
     TextView name;
     TextView email;
@@ -37,7 +36,6 @@ public class userDetails extends AppCompatActivity {
     TextView following;
     ImageView dp;
     Bundle extras;
-    String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,68 +51,22 @@ public class userDetails extends AppCompatActivity {
         dp = findViewById(R.id.displayPicture);
 
         extras = getIntent().getExtras();
-        username = extras.getString("USERNAME_FROM_MAIN_ACTIVITY");
-        Log.i("username",""+username);
-        name.setText(username);
-        loadData();
+        name.setText(extras.getString("NAME_FROM_MAIN_ACTIVITY"));
+        email.setText(extras.getString("EMAIL_FROM_MAIN_ACTIVITY"));
+        followers.setText(extras.getString("FOLLOWERS_FROM_MAIN_ACTIVITY"));
+        following.setText(extras.getString("FOLLOWING_FROM_MAIN_ACTIVITY"));
+        downloadImageTask task = new downloadImageTask();
+        try{
+            Bitmap img = task.execute(extras.getString("URL_FROM_MAIN_ACTIVITY")).get();
+            if(img!=null) dp.setImageBitmap(img);
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
     }
-
-    public void loadData(){
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURL)
-                .addConverterFactory(GsonConverterFactory.create()).build();
-
-        GithubApi myApi = retrofit.create(GithubApi.class);
-        Call<post> call = myApi.getPosts(username);
-        call.enqueue(new Callback<post>() {
-            @Override
-            public void onResponse(Call<post> call, Response<post> response) {
-                Log.i("status","started onResponse");
-                if(!response.isSuccessful()){
-                    Toast.makeText(userDetails.this, "Something went wrong!", Toast.LENGTH_SHORT).show();
-                    Log.i("error!",""+response.code());
-                }else {
-                    //Log.i("status","name,email,followers,following -> "+response.body().getName()+" "
-                       // +response.body().getEmail()+" "+response.body().getFollowers()+" "+response.body().getFollowing());
-                    if(response.body().getName()!=null){
-                        Log.i("status","name not null");
-                        name.setText("Name : " + response.body().getName());
-                    }else {
-                        name.setText("Name not found");
-                    }
-                    if(response.body().getEmail()!=null) {
-                        email.setText("Email : "+response.body().getEmail());
-                        Log.i("status","email not null");
-                    }else {
-                        email.setText("Email not found");
-                    }
-                    followers.setText("Followers : "+ String.valueOf(response.body().getFollowers()));
-                    following.setText("Following : "+ String.valueOf(response.body().getFollowing()));
-
-                    // Updating dp
-                    downloadImageTask task = new downloadImageTask();
-                    Log.i("avatar url" ,""+response.body().getAvatar_url());
-                    Bitmap img = null;
-                    try {
-                        img = task.execute(response.body().getAvatar_url()).get();
-                        if(img!=null) {
-                            dp.setImageBitmap(img);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<post> call, Throwable t) {
-                Log.i("Failure!",t.getMessage());
-            }
-        });
-    }
-
     public void onButtonClick(View view) {
-
         Intent intent = new Intent(this,repositoryList.class);
+        intent.putExtra("USERNAME_FROM_MAIN_ACTIVITY",extras.getString("USERNAME_FROM_MAIN_ACTIVITY"));
         startActivity(intent);
     }
 

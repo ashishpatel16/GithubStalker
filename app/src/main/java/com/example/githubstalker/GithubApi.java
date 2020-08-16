@@ -10,4 +10,7 @@ public interface GithubApi {
 
     @GET("users/{user}")
     Call<post> getPosts(@Path("user") String user);
+
+    @GET("{user}/repos")
+    Call<List<post>> getRepos(@Path("user") String user);
 }

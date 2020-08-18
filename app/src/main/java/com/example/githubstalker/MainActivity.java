@@ -2,10 +2,12 @@ package com.example.githubstalker;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.opengl.Visibility;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -67,7 +69,14 @@ public class MainActivity extends AppCompatActivity {
         i.putExtra("FOLLOWERS_FROM_MAIN_ACTIVITY",followers);
         i.putExtra("FOLLOWING_FROM_MAIN_ACTIVITY",following);
         i.putExtra("USERNAME_FROM_MAIN_ACTIVITY",username);
-        startActivity(i);
+        animationView.setVisibility(View.INVISIBLE);
+        animationView.pauseAnimation();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startActivity(i, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+        } else {
+            startActivity(i);
+        }
+
     }
 
     public void loadData(){

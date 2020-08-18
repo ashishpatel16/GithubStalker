@@ -3,9 +3,11 @@ package com.example.githubstalker;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -62,6 +64,15 @@ public class repositoryList extends AppCompatActivity {
 
                     ArrayAdapter<String> reposAdapter = new ArrayAdapter<String>(repositoryList.this,R.layout.list_white_text,repos);
                     myRepos.setAdapter(reposAdapter);
+                    myRepos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            String link = response.body().get(position).getHtml_url();
+                            Uri url = Uri.parse(link);
+                            Intent openUrl = new Intent(Intent.ACTION_VIEW,url);
+                            startActivity(openUrl);
+                        }
+                    });
                 }
             }
 

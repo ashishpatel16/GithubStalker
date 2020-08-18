@@ -2,10 +2,12 @@ package com.example.githubstalker;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -67,7 +69,11 @@ public class userDetails extends AppCompatActivity {
     public void onButtonClick(View view) {
         Intent intent = new Intent(this,repositoryList.class);
         intent.putExtra("USERNAME_FROM_MAIN_ACTIVITY",extras.getString("USERNAME_FROM_MAIN_ACTIVITY"));
-        startActivity(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+        } else {
+            startActivity(intent);
+        }
     }
 
     public static class downloadImageTask extends AsyncTask<String,Void, Bitmap> {
